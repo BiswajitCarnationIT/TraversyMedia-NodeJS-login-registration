@@ -6,6 +6,9 @@ const PORT = process.env.PORT || 5000
 
 //Router
 app.use('/',require('./routes/index'))
+app.use('/users',require('./routes/users'))
+
+
 
 
 
