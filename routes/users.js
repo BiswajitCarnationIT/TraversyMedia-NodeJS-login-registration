@@ -4,6 +4,12 @@ const express = require("express")
 
 const router = express.Router()
 
+// Encrypt password
+const bcrypt = require("bcryptjs")
+
+// User model
+const User = require("../models/User")
+
 // Login page
 router.get('/login',(req,res)=>{
     //res.send('Login')
@@ -30,7 +36,7 @@ router.post('/register',(req,res)=>{
 
     // Check password match
     if(password !== password2){
-        errors.push({msg:'Passwords do not'})
+        errors.push({msg:'Passwords do not match'})
     }
 
     // Check pass length
@@ -47,7 +53,48 @@ router.post('/register',(req,res)=>{
             password2
         })  
     }else{
-        res.send('pass')
+        // res.send('pass')
+
+        // Validation passed
+        User.findOne({email: email})
+        .then(user => {
+            if(user){
+                // User exists
+                errors.push({msg:'Email is already registered'})
+                res.render('register',{
+                    errors:errors,
+                    name:name,
+                    email:email,
+                    password:password,
+                    password2:password2
+                })
+            }else{
+                const newUser = new User({
+                    name:name,
+                    email,
+                    password,
+                })
+                // console.log(newUser)
+                // res.send('hello')
+
+                //Hash Password
+                bcrypt.genSalt(10,(error,salt)=>{
+                    bcrypt.hash(newUser.password,salt,(error,hash)=>{
+                        if(error) throw error;
+                        // Set password to hashed
+                        newUser.password = hash;
+                        // Save to database
+                        newUser.save()
+                        .then(user => {
+                            //res.send('Saved in DB')
+                            res.redirect('/users/login')
+                        })
+                        .catch(error => console.log(error))
+                    })
+                })
+
+            }
+        })
     }
 })
 
